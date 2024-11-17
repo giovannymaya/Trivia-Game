@@ -29,4 +29,4 @@ Inspired by son Bash, decided to create a fun and interactive trivia game perfec
 - Vercel used for deployment
 
 ### 🚀 Live Demo
-Please try the game here: [Maya Family Trivia Game](https://trivia-game-tau-one.vercel.app/).
+Please try the game here: [Maya Family Trivia Game](https://trivia-game-maya.vercel.app/).
