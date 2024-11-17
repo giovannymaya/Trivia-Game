@@ -26,7 +26,7 @@ Inspired by son Bash, decided to create a fun and interactive trivia game perfec
 - HTML5
 - Local Storage for score persistence
 - Open Trivia Database API used for questions
-- Vercel for deployment
+- Vercel used for deployment
 
 ### 🚀 Live Demo
 Please try the game here: [Maya Family Trivia Game](https://trivia-game-tau-one.vercel.app/).
