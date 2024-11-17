@@ -1,0 +1,253 @@
+body {
+    font-family: "Itim", cursive;
+    font-weight: 400;
+    font-style: normal;
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 50px;
+    background-image: url("https://cdn.pixabay.com/animation/2023/09/16/14/35/14-35-29-226_512.gif");
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: cover;
+    }
+
+.game-container {
+    background-image: linear-gradient(rgb(2, 33, 133), rgb(104, 22, 204));
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.header {
+    text-align: center;
+    color: #7793f9;
+    margin-bottom: 20px;
+}
+
+.screen {
+    padding: 20px;
+}
+
+.hidden {
+    display: none;
+}
+
+/* Start Screen Styles */
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+    color: #7793f9;
+}
+
+.form-group input,
+.form-group select {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    font-size: 1em;
+    color: #7793f9;
+}
+
+.start-btn {
+    width: 100%;
+    padding: 10px;
+    background-color: #007bff;
+    color: #b7c4f2;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 1.1em;
+    font-family: "Itim", cursive;
+}
+
+.start-btn:hover {
+    background-color: #639ede;
+    box-shadow: 0 0.5em 0.5em -0.4em #007bff;
+    transform: translateY(-0.1em);
+    box-shadow: 2em;
+}
+
+.player-info {
+    text-align: center;
+    margin-bottom: 10px;
+    font-size: 1.2em;
+    color: #7793f9;
+}
+
+.timer-container {
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+.timer-bar {
+    width: 100%;
+    height: 10px;
+    background-color: #e9ecef;
+    border-radius: 5px;
+    overflow: hidden;
+    margin-bottom: 5px;
+}
+
+#timer-fill {
+    width: 100%;
+    height: 100%;
+    background-color: #28a745;
+    transition: width 1s linear;
+}
+
+#timer-text {
+    font-size: 1.2em;
+    font-weight: bold;
+    color: #7793f9;
+}
+
+/* Game Area Styles */
+.score-section {
+    text-align: center;
+    margin-bottom: 20px;
+    font-size: 1.2em;
+    color: #eac575;
+}
+
+.question {
+    font-size: 1.2em;
+    margin-bottom: 20px;
+    padding: 10px;
+    background: #f8f9fa;
+    border-radius: 5px;
+}
+
+.answers {
+    display: grid;
+    gap: 10px;
+}
+
+.answer-btn {
+    padding: 15px 20px;
+    border: none;
+    border-radius: 5px;
+    background: #e9ecef;
+    cursor: pointer;
+    font-size: 1em;
+    transition: background-color 0.3s;
+}
+
+.answer-btn:hover {
+    background: #dee2e6;
+}
+
+.answer-btn.correct {
+    background: #28a745;
+    color: white;
+}
+
+.answer-btn.incorrect {
+    background: #dc3545;
+    color: white;
+}
+
+.answer-btn:disabled {
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+
+
+#high-scores-screen {
+    text-align: center;
+    color: #91b3fa;
+}
+
+.score-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px;
+    margin: 5px 0;
+    background: #f8f9fa;
+    border-radius: 5px;
+}
+
+.button-group {
+    margin-top: 20px;
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+}
+
+.restart-btn, .clear-btn {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 1.1em;
+}
+
+.restart-btn {
+    background: #007bff;
+    color: white;
+}
+
+.clear-btn {
+    background: #dc3545;
+    color: white;
+}
+
+.restart-btn:hover {
+    background: #0056b3;
+}
+
+.clear-btn:hover {
+    background: #c82333;
+}
+
+.time-warning {
+    background-color: #dc3545 !important;
+}
+.loader {
+    text-align: center;
+    padding: 20px;
+}
+
+.trophy {
+    font-size: 50px;
+    margin-bottom: 20px;
+}
+.video-background {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -1;
+    overflow: hidden;
+}
+.video-background video {
+    min-width: 100%;
+    min-height: 100%;
+    width: auto;
+    height: auto;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    object-fit: cover;
+}
+.video-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5); /* adjust opacity*/
+    z-index: -1;
+}
+/* main content area */
+.main-content {
+    position: relative;
+    z-index: 1;
+}

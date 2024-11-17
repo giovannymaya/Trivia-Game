@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Maya Family Trivia Game</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="icon" type=image/png" href="assets/gio_favicon-32x32.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Itim&display=swap" rel="stylesheet">
+</head>
+
+<body>
+    <div class="game-container">
+        <div class="header">
+            <h1>Maya Family Trivia Game</h1>
+        </div>
+
+        <!-- Start screen -->
+        <div id="start-screen" class="screen">
+            <form id="player-form">
+                <div class="form-group">
+                    <label for="player-name">Enter Your Name:</label>
+                    <input type="text" id="player-name" required>
+                </div>
+                <div class="form-group">
+                    <label for="category">Select a Category:</label>
+                    <select id="category" required>
+                        <option value="">Loading categories...</option>
+                    </select>
+                </div>
+                <button type="submit" class="start-btn">Start Game</button>
+            </form>
+        </div>
+
+        <!-- game screen -->
+        <div id="game-screen" class="screen hidden">
+            <div class="player-info">
+                <span id="player-display"></span>
+            </div>
+            <div class="timer-container">
+                <div class="timer-bar">
+                    <div id="timer-fill"></div>
+                </div>
+                <div id="timer-text">30</div>
+            </div>
+            <div id="game-area">
+                <div class="loader">Loading questions...</div>
+            </div>
+        </div>
+
+        <!-- high scores screen -->
+        <div id="high-scores-screen" class="screen hidden">
+            <h2>High Scores</h2>
+            <div id="high-scores-list"></div>
+            <div class="button-group">
+                <button id="play-again" class="restart-btn">Play Again</button>
+                <button id="clear-scores" class="clear-btn">Clear Scores</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="video-background">
+        <video autoplay muted loop playsinline>
+            <source src="assets/space_background.mp4" type="video/mp4">
+        </video>
+    </div>
+    <div class="video-overlay"></div>
+    <main class="main-content">
+
+        <!-- audio sounds -->
+        <audio id="tick-sound" src="assets/tick-sound.wav" preload="auto"></audio>
+        <audio id="correct-sound" src="assets/correct-sound.mp3" preload="auto"></audio>
+        <audio id="wrong-sound" src="assets/wrong-sound.mp3" preload="auto"></audio>
+        <audio id="timeout-sound" src="assets/timeout-sound.mp3" preload="auto"></audio>
+
+        <script src="app.js"></script>
+</body>
+
+</html>
