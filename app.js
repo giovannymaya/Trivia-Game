@@ -3,6 +3,9 @@ const QUESTION_COUNT = 10;
 const QUESTION_TIME = 30;
 const MAX_NAME_LENGTH = 30;
 const HIGH_SCORES_KEY = 'triviaHighScores';
+const ANSWER_LETTERS = ['A', 'B', 'C', 'D'];
+const TIMER_CIRCUMFERENCE = 2 * Math.PI * 19; // matches r="19" in the timer SVG
+const REVEAL_DELAY = 1500;
 
 // Fisher–Yates shuffle (unbiased, unlike sort(() => Math.random() - 0.5))
 function shuffle(items) {
@@ -30,9 +33,20 @@ function playSound(audio) {
     audio.play().catch(() => { /* autoplay blocked or not loaded; ignore */ });
 }
 
+function resultMessage(score, total) {
+    const ratio = total ? score / total : 0;
+    if (ratio === 1) return { emoji: '🏆', title: 'Perfect game!', subtitle: 'Flawless. Take a bow.' };
+    if (ratio >= 0.8) return { emoji: '🚀', title: 'Out of this world!', subtitle: 'That was a stellar run.' };
+    if (ratio >= 0.5) return { emoji: '🎉', title: 'Nice work!', subtitle: 'Solid score. Can you beat it?' };
+    if (ratio >= 0.3) return { emoji: '💪', title: 'Good effort!', subtitle: 'Practice makes perfect.' };
+    return { emoji: '🌱', title: 'Keep going!', subtitle: 'Every expert started somewhere.' };
+}
+
 class TriviaGame {
     constructor() {
         this.questions = [];
+        this.results = [];
+        this.answerButtons = [];
         this.currentQuestion = 0;
         this.score = 0;
         this.timer = null;
@@ -42,6 +56,7 @@ class TriviaGame {
         this.categories = [];
         this.selectedCategory = '';
         this.sessionToken = null;
+        this.lastEntryId = null;
 
         this.tickSound = document.getElementById('tick-sound');
         this.correctSound = document.getElementById('correct-sound');
@@ -78,8 +93,9 @@ class TriviaGame {
 
     populateCategorySelect() {
         const select = document.getElementById('category');
-        select.replaceChildren(el('option', { text: 'Any Category' }));
-        select.firstChild.value = '';
+        const anyOption = el('option', { text: 'Any category' });
+        anyOption.value = '';
+        select.replaceChildren(anyOption);
         this.categories.forEach(category => {
             const option = el('option', { text: category.name });
             option.value = String(category.id);
@@ -97,9 +113,27 @@ class TriviaGame {
             this.showStartScreen();
         });
 
+        document.getElementById('view-scores').addEventListener('click', () => {
+            this.showHighScores({ showSummary: false });
+        });
+
         document.getElementById('clear-scores').addEventListener('click', () => {
             if (window.confirm('Clear all high scores?')) {
                 this.clearHighScores();
+            }
+        });
+
+        // Keyboard shortcuts: 1-4 or A-D to pick an answer.
+        document.addEventListener('keydown', (e) => {
+            if (e.ctrlKey || e.metaKey || e.altKey) return;
+            if (document.getElementById('game-screen').classList.contains('hidden')) return;
+            const key = e.key.toUpperCase();
+            let index = ANSWER_LETTERS.indexOf(key);
+            if (index === -1 && /^[1-4]$/.test(key)) index = Number(key) - 1;
+            const entry = this.answerButtons[index];
+            if (entry && !entry.button.disabled) {
+                e.preventDefault();
+                entry.button.click();
             }
         });
     }
@@ -114,6 +148,7 @@ class TriviaGame {
     showStartScreen() {
         this.stopTimers();
         this.showScreen('start-screen');
+        document.getElementById('player-name').focus({ preventScroll: true });
     }
 
     stopTimers() {
@@ -132,18 +167,25 @@ class TriviaGame {
         // Only accept category ids that came from the API list.
         this.selectedCategory = this.categories.some(c => String(c.id) === categoryValue) ? categoryValue : '';
 
-        document.getElementById('player-display').textContent = `Player: ${this.playerName}`;
-        this.showScreen('game-screen');
-        this.showMessage('Loading questions...');
+        document.getElementById('player-display').textContent = this.playerName;
+        document.getElementById('player-avatar').textContent = [...this.playerName][0] || '?';
         this.currentQuestion = 0;
         this.score = 0;
+        this.results = [];
+        this.answerButtons = [];
+        this.updateScoreDisplay(false);
+        this.resetTimerDisplay();
+        this.renderProgress(0);
+        this.showScreen('game-screen');
+        this.showMessage('Loading questions...', { spinner: true });
 
         try {
             await this.fetchQuestions();
+            this.renderProgress(this.questions.length);
             this.renderQuestion();
         } catch (error) {
             console.error('Error fetching questions:', error);
-            this.showMessage(error.userMessage || 'Could not load questions. Please check your connection and try again.', true);
+            this.showMessage(error.userMessage || 'Could not load questions. Please check your connection and try again.', { backButton: true });
         }
     }
 
@@ -196,32 +238,69 @@ class TriviaGame {
             throw error;
         }
 
-        const decode = (value) => decodeURIComponent(value);
+        const decode = (value) => decodeURIComponent(value ?? '');
         this.questions = data.results.map(q => {
             const correct = decode(q.correct_answer);
             return {
                 question: decode(q.question),
+                category: decode(q.category),
+                difficulty: decode(q.difficulty).toLowerCase(),
                 correctAnswer: correct,
                 answers: shuffle([...q.incorrect_answers.map(decode), correct]),
             };
         });
     }
 
-    showMessage(message, withBackButton = false) {
-        const gameArea = document.getElementById('game-area');
-        const children = [el('p', { text: message })];
-        if (withBackButton) {
-            const back = el('button', { className: 'restart-btn', text: 'Back' });
+    showMessage(message, { spinner = false, backButton = false } = {}) {
+        const children = [];
+        if (spinner) children.push(el('span', { className: 'spinner' }));
+        children.push(el('p', { text: message }));
+        if (backButton) {
+            const back = el('button', { className: 'btn btn-ghost', text: '← Back' });
             back.type = 'button';
             back.addEventListener('click', () => this.showStartScreen());
             children.push(back);
         }
-        gameArea.replaceChildren(el('div', { className: 'loader' }, children));
+        document.getElementById('game-area').replaceChildren(el('div', { className: 'loader' }, children));
+    }
+
+    // ---- HUD -------------------------------------------------------------
+
+    updateScoreDisplay(animate = true) {
+        document.getElementById('score-display').textContent = this.score;
+        const chip = document.querySelector('.score-chip');
+        chip.classList.remove('bump');
+        if (animate) {
+            void chip.offsetWidth; // restart the animation
+            chip.classList.add('bump');
+        }
+    }
+
+    renderProgress(total) {
+        const progress = document.getElementById('progress');
+        progress.replaceChildren(...Array.from({ length: total }, (_, i) => {
+            const item = el('li');
+            const result = this.results[i];
+            if (result === true) item.className = 'is-correct';
+            else if (result === false) item.className = 'is-wrong';
+            else if (i === this.currentQuestion) item.className = 'is-current';
+            item.setAttribute('aria-label', `Question ${i + 1}: ${result === true ? 'correct' : result === false ? 'wrong' : i === this.currentQuestion ? 'current' : 'upcoming'}`);
+            return item;
+        }));
+    }
+
+    resetTimerDisplay() {
+        this.timeLeft = QUESTION_TIME;
+        const ring = document.getElementById('timer-ring');
+        // Jump back to full without animating the ring backwards.
+        ring.style.transition = 'none';
+        this.updateTimerDisplay();
+        void ring.getBoundingClientRect();
+        ring.style.transition = '';
     }
 
     startTimer() {
-        this.timeLeft = QUESTION_TIME;
-        this.updateTimerDisplay();
+        this.resetTimerDisplay();
         clearInterval(this.timer);
 
         this.timer = setInterval(() => {
@@ -230,7 +309,6 @@ class TriviaGame {
 
             if (this.timeLeft <= 5 && this.timeLeft > 0) {
                 playSound(this.tickSound);
-                document.getElementById('timer-fill').classList.add('time-warning');
             }
 
             if (this.timeLeft <= 0) {
@@ -243,58 +321,96 @@ class TriviaGame {
 
     updateTimerDisplay() {
         document.getElementById('timer-text').textContent = this.timeLeft;
-        document.getElementById('timer-fill').style.width = `${(this.timeLeft / QUESTION_TIME) * 100}%`;
+        const timer = document.getElementById('timer');
+        timer.setAttribute('aria-label', `${this.timeLeft} seconds remaining`);
+        timer.classList.toggle('is-low', this.timeLeft <= 10 && this.timeLeft > 5);
+        timer.classList.toggle('is-critical', this.timeLeft <= 5);
+        const elapsed = 1 - this.timeLeft / QUESTION_TIME;
+        document.getElementById('timer-ring').style.strokeDashoffset = String(TIMER_CIRCUMFERENCE * elapsed);
     }
 
-    revealAnswers(selectedButton = null) {
-        const { correctAnswer } = this.questions[this.currentQuestion];
-        document.querySelectorAll('.answer-btn').forEach(btn => {
-            btn.disabled = true;
-            if (btn.textContent === correctAnswer) {
-                btn.classList.add('correct');
-            } else if (btn === selectedButton) {
-                btn.classList.add('incorrect');
-            }
-        });
-        this.advanceTimeout = setTimeout(() => this.proceedToNext(), 1500);
-    }
-
-    handleTimeUp() {
-        this.revealAnswers();
-    }
+    // ---- Questions ---------------------------------------------------------
 
     renderQuestion() {
         const question = this.questions[this.currentQuestion];
 
-        const answerButtons = question.answers.map(answer => {
-            const button = el('button', { className: 'answer-btn', text: answer });
+        this.answerButtons = question.answers.map((answer, i) => {
+            const button = el('button', { className: 'answer-btn' }, [
+                el('span', { className: 'answer-letter', text: ANSWER_LETTERS[i] }),
+                el('span', { className: 'answer-text', text: answer }),
+            ]);
             button.type = 'button';
             button.addEventListener('click', () => this.handleAnswer(button, answer));
-            return button;
+            return { button, answer };
         });
 
+        const meta = el('div', { className: 'question-meta' }, [
+            el('span', { text: `Question ${this.currentQuestion + 1} of ${this.questions.length}` }),
+        ]);
+        if (question.category) meta.appendChild(el('span', { className: 'pill', text: question.category }));
+        if (['easy', 'medium', 'hard'].includes(question.difficulty)) {
+            meta.appendChild(el('span', { className: `pill pill-${question.difficulty}`, text: question.difficulty }));
+        }
+
+        const hint = el('p', { className: 'keyboard-hint' });
+        hint.append('Tip: press ', el('kbd', { text: '1' }), '–', el('kbd', { text: '4' }), ' or ',
+            el('kbd', { text: 'A' }), '–', el('kbd', { text: 'D' }), ' to answer');
+
         document.getElementById('game-area').replaceChildren(
-            el('div', { className: 'score-section' }, [
-                el('p', { text: `Question ${this.currentQuestion + 1} of ${this.questions.length}` }),
-                el('p', { text: `Score: ${this.score}` }),
-            ]),
-            el('div', { className: 'question', text: question.question }),
-            el('div', { className: 'answers' }, answerButtons),
+            el('div', { className: 'question-card' }, [
+                meta,
+                el('h2', { className: 'question', text: question.question }),
+                el('div', { className: 'answers' }, this.answerButtons.map(a => a.button)),
+                el('p', { className: 'feedback', text: '' }),
+                ...(this.currentQuestion === 0 ? [hint] : []),
+            ])
         );
 
-        document.getElementById('timer-fill').classList.remove('time-warning');
+        this.renderProgress(this.questions.length);
         this.startTimer();
+    }
+
+    revealAnswers(selectedButton, outcome) {
+        const { correctAnswer } = this.questions[this.currentQuestion];
+        this.answerButtons.forEach(({ button, answer }) => {
+            button.disabled = true;
+            if (answer === correctAnswer) {
+                button.classList.add('correct');
+            } else if (button === selectedButton) {
+                button.classList.add('incorrect');
+            }
+        });
+
+        const feedback = document.querySelector('.feedback');
+        const messages = {
+            correct: ['Correct! 🎯', 'is-correct'],
+            wrong: [`Not quite. The answer was “${correctAnswer}”.`, 'is-wrong'],
+            timeout: [`Time's up! The answer was “${correctAnswer}”.`, 'is-wrong'],
+        };
+        const [text, className] = messages[outcome];
+        feedback.textContent = text;
+        feedback.classList.add(className);
+
+        this.results[this.currentQuestion] = outcome === 'correct';
+        this.renderProgress(this.questions.length);
+        this.advanceTimeout = setTimeout(() => this.proceedToNext(), outcome === 'correct' ? REVEAL_DELAY : REVEAL_DELAY + 700);
+    }
+
+    handleTimeUp() {
+        this.revealAnswers(null, 'timeout');
     }
 
     handleAnswer(buttonElement, selectedAnswer) {
         clearInterval(this.timer);
         if (selectedAnswer === this.questions[this.currentQuestion].correctAnswer) {
             this.score++;
+            this.updateScoreDisplay();
             playSound(this.correctSound);
+            this.revealAnswers(buttonElement, 'correct');
         } else {
             playSound(this.wrongSound);
+            this.revealAnswers(buttonElement, 'wrong');
         }
-        this.revealAnswers(buttonElement);
     }
 
     proceedToNext() {
@@ -308,18 +424,23 @@ class TriviaGame {
 
     endGame() {
         this.stopTimers();
+        this.answerButtons = [];
         this.updateHighScores();
-        this.showHighScores();
+        this.showHighScores({ showSummary: true });
     }
+
+    // ---- High scores -------------------------------------------------------
 
     updateHighScores() {
         const category = this.categories.find(c => String(c.id) === this.selectedCategory);
         const highScores = this.getHighScores();
+        this.lastEntryId = Date.now();
         highScores.push({
+            id: this.lastEntryId,
             name: this.playerName,
             score: this.score,
             total: this.questions.length,
-            category: category ? category.name : 'Any Category',
+            category: category ? category.name : 'Any category',
             date: new Date().toLocaleDateString(),
         });
 
@@ -339,6 +460,7 @@ class TriviaGame {
             return parsed
                 .filter(s => s && typeof s === 'object' && Number.isFinite(s.score))
                 .map(s => ({
+                    id: Number.isFinite(s.id) ? s.id : null,
                     name: String(s.name ?? '').slice(0, MAX_NAME_LENGTH),
                     score: s.score,
                     total: Number.isFinite(s.total) ? s.total : QUESTION_COUNT,
@@ -356,25 +478,48 @@ class TriviaGame {
         } catch {
             // Storage unavailable; nothing to clear.
         }
-        this.showHighScores();
+        this.renderLeaderboard();
     }
 
-    showHighScores() {
+    renderLeaderboard() {
         const highScores = this.getHighScores();
         const list = document.getElementById('high-scores-list');
+        const medals = ['🥇', '🥈', '🥉'];
 
         if (highScores.length === 0) {
-            list.replaceChildren(el('p', { text: 'No high scores yet!' }));
-        } else {
-            list.replaceChildren(...highScores.map((s, index) =>
-                el('div', { className: 'score-item' }, [
-                    el('span', { text: `${index + 1}. ${s.name}` }),
-                    el('span', { text: `${s.score}/${s.total} - ${s.category}` }),
-                    el('span', { text: s.date }),
-                ])
-            ));
+            list.replaceChildren(el('li', { className: 'empty-state', text: 'No high scores yet. Be the first!' }));
+            return;
         }
 
+        list.replaceChildren(...highScores.map((s, index) => {
+            const item = el('li', { className: 'score-item' }, [
+                el('span', { className: 'score-rank', text: medals[index] || String(index + 1) }),
+                el('span', { className: 'score-player' }, [
+                    el('span', { className: 'score-name', text: s.name }),
+                    el('span', { className: 'score-meta', text: [s.category, s.date].filter(Boolean).join(' · ') }),
+                ]),
+                el('span', { className: 'score-value', text: `${s.score}/${s.total}` }),
+            ]);
+            if (s.id !== null && s.id === this.lastEntryId) item.classList.add('is-new');
+            return item;
+        }));
+    }
+
+    showHighScores({ showSummary }) {
+        const summary = document.getElementById('result-summary');
+        summary.classList.toggle('hidden', !showSummary);
+        if (showSummary) {
+            const total = this.questions.length;
+            const { emoji, title, subtitle } = resultMessage(this.score, total);
+            document.getElementById('result-emoji').textContent = emoji;
+            document.getElementById('result-title').textContent = title;
+            document.getElementById('result-score').textContent = `${this.score}/${total}`;
+            document.getElementById('result-subtitle').textContent = `${this.playerName}, ${subtitle.charAt(0).toLowerCase()}${subtitle.slice(1)}`;
+        } else {
+            this.lastEntryId = null;
+        }
+
+        this.renderLeaderboard();
         this.showScreen('high-scores-screen');
     }
 }

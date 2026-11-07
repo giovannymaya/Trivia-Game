@@ -8,8 +8,10 @@ Inspired by son Bash, decided to create a fun and interactive trivia game perfec
 - 🎵 Interactive sound effects
 - 🏆 Local high score tracking
 - 📱 Responsive design for all devices
-- 🎨 Space-themed and engaging user interface
+- 🎨 Space-themed, frosted-glass interface with animated feedback
 - 🎯 10 questions per game session
+- ⌨️ Keyboard shortcuts (1–4 or A–D) to answer
+- 🥇 Leaderboard with medals and an end-of-game results screen
 
 ### 🎯 How to Play
 
