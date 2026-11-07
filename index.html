@@ -7,62 +7,102 @@
     <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self'; media-src 'self'; connect-src https://opentdb.com; base-uri 'none'; form-action 'none'">
     <meta name="referrer" content="no-referrer">
     <meta name="description" content="A family-friendly, timed trivia game with sound effects and high scores.">
+    <meta name="theme-color" content="#0b0820">
     <title>Maya Family Trivia Game</title>
-    <link rel="stylesheet" href="styles.css">
     <link rel="icon" type="image/png" href="assets/gio_favicon-32x32.png">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Itim&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
 </head>
 
 <body>
     <main class="game-container">
-        <div class="header">
-            <h1>Maya Family Trivia Game</h1>
-        </div>
 
         <!-- Start screen -->
-        <div id="start-screen" class="screen">
-            <form id="player-form">
-                <div class="form-group">
-                    <label for="player-name">Enter Your Name:</label>
-                    <input type="text" id="player-name" maxlength="30" autocomplete="nickname" required>
+        <section id="start-screen" class="screen" aria-labelledby="game-title">
+            <div class="hero">
+                <div class="hero-badge" aria-hidden="true">🚀</div>
+                <p class="eyebrow">Family game night</p>
+                <h1 id="game-title" class="title">Maya Family <span class="gradient-text">Trivia</span></h1>
+                <p class="tagline">Ten questions. Thirty seconds each. Bragging rights forever.</p>
+            </div>
+
+            <form id="player-form" class="start-form">
+                <div class="field">
+                    <label for="player-name">Your name</label>
+                    <input type="text" id="player-name" maxlength="30" autocomplete="nickname" placeholder="Who's playing?" required>
                 </div>
-                <div class="form-group">
-                    <label for="category">Select a Category:</label>
-                    <select id="category">
-                        <option value="">Loading categories...</option>
-                    </select>
+                <div class="field">
+                    <label for="category">Category</label>
+                    <div class="select-wrap">
+                        <select id="category">
+                            <option value="">Loading categories...</option>
+                        </select>
+                    </div>
                 </div>
-                <button type="submit" class="start-btn">Start Game</button>
+                <button type="submit" class="btn btn-primary btn-block">
+                    Start game <span aria-hidden="true">→</span>
+                </button>
             </form>
-        </div>
 
-        <!-- game screen -->
-        <div id="game-screen" class="screen hidden">
-            <div class="player-info">
-                <span id="player-display"></span>
+            <div class="start-footer">
+                <ul class="chips" aria-label="Game rules">
+                    <li class="chip"><span aria-hidden="true">❓</span> 10 questions</li>
+                    <li class="chip"><span aria-hidden="true">⏱️</span> 30s each</li>
+                    <li class="chip"><span aria-hidden="true">🔊</span> Sound on</li>
+                </ul>
+                <button type="button" id="view-scores" class="btn btn-ghost btn-small">
+                    <span aria-hidden="true">🏆</span> High scores
+                </button>
             </div>
-            <div class="timer-container">
-                <div class="timer-bar">
-                    <div id="timer-fill"></div>
+        </section>
+
+        <!-- Game screen -->
+        <section id="game-screen" class="screen hidden" aria-label="Trivia question">
+            <div class="hud">
+                <div class="player-chip">
+                    <span class="avatar" id="player-avatar" aria-hidden="true"></span>
+                    <span id="player-display"></span>
                 </div>
-                <div id="timer-text" aria-hidden="true">30</div>
+                <div class="hud-right">
+                    <div class="score-chip" aria-live="polite">
+                        <span aria-hidden="true">⭐</span> <span id="score-display">0</span>
+                    </div>
+                    <div class="timer" id="timer" role="timer" aria-label="Time remaining">
+                        <svg viewBox="0 0 44 44" aria-hidden="true">
+                            <circle class="timer-track" cx="22" cy="22" r="19"></circle>
+                            <circle class="timer-ring" id="timer-ring" cx="22" cy="22" r="19"></circle>
+                        </svg>
+                        <span id="timer-text">30</span>
+                    </div>
+                </div>
             </div>
-            <div id="game-area" aria-live="polite">
-                <div class="loader">Loading questions...</div>
-            </div>
-        </div>
 
-        <!-- high scores screen -->
-        <div id="high-scores-screen" class="screen hidden">
-            <h2>High Scores</h2>
-            <div id="high-scores-list"></div>
-            <div class="button-group">
-                <button type="button" id="play-again" class="restart-btn">Play Again</button>
-                <button type="button" id="clear-scores" class="clear-btn">Clear Scores</button>
+            <ol class="progress" id="progress" aria-label="Question progress"></ol>
+
+            <div id="game-area" aria-live="polite">
+                <div class="loader"><span class="spinner" aria-hidden="true"></span><p>Loading questions...</p></div>
             </div>
-        </div>
+        </section>
+
+        <!-- Results / high scores screen -->
+        <section id="high-scores-screen" class="screen hidden" aria-labelledby="scores-title">
+            <div id="result-summary" class="result-summary hidden">
+                <div class="result-emoji" id="result-emoji" aria-hidden="true"></div>
+                <h2 class="result-title" id="result-title"></h2>
+                <p class="result-score"><span id="result-score"></span></p>
+                <p class="result-subtitle" id="result-subtitle"></p>
+            </div>
+
+            <h2 id="scores-title" class="section-title"><span aria-hidden="true">🏆</span> Leaderboard</h2>
+            <ol id="high-scores-list" class="leaderboard"></ol>
+
+            <div class="button-group">
+                <button type="button" id="play-again" class="btn btn-primary">Play again</button>
+                <button type="button" id="clear-scores" class="btn btn-ghost btn-danger">Clear scores</button>
+            </div>
+        </section>
     </main>
 
     <div class="video-background" aria-hidden="true">
@@ -70,7 +110,7 @@
             <source src="assets/space_background.mp4" type="video/mp4">
         </video>
     </div>
-    <div class="video-overlay"></div>
+    <div class="video-overlay" aria-hidden="true"></div>
 
     <!-- audio sounds -->
     <audio id="tick-sound" src="assets/tick-sound.wav" preload="auto"></audio>
