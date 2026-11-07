@@ -25,14 +25,32 @@
                 <div class="hero-badge" aria-hidden="true">🚀</div>
                 <p class="eyebrow">Family game night</p>
                 <h1 id="game-title" class="title">Maya Family <span class="gradient-text">Trivia</span></h1>
-                <p class="tagline">Ten questions. Thirty seconds each. Bragging rights forever.</p>
+                <p class="tagline">Quick-fire questions. Beat the clock. Bragging rights forever.</p>
             </div>
 
-            <form id="player-form" class="start-form">
-                <div class="field">
-                    <label for="player-name">Your name</label>
-                    <input type="text" id="player-name" maxlength="30" autocomplete="nickname" placeholder="Who's playing?" required>
+            <form id="player-form" class="start-form" novalidate>
+                <div class="segmented" role="group" aria-label="Game mode">
+                    <button type="button" class="segment" data-mode="solo" aria-pressed="true">
+                        <span aria-hidden="true">👤</span> Solo
+                    </button>
+                    <button type="button" class="segment" data-mode="family" aria-pressed="false">
+                        <span aria-hidden="true">👨‍👩‍👧‍👦</span> Family night
+                    </button>
                 </div>
+
+                <div id="solo-fields" class="field">
+                    <label for="player-name">Your name</label>
+                    <input type="text" id="player-name" maxlength="30" autocomplete="nickname" placeholder="Who's playing?">
+                </div>
+
+                <fieldset id="family-fields" class="field fieldset hidden">
+                    <legend>Players <span class="hint">2–6 players, taking turns on this device</span></legend>
+                    <ol id="family-players" class="family-players"></ol>
+                    <button type="button" id="add-player" class="btn btn-ghost btn-small">
+                        <span aria-hidden="true">+</span> Add player
+                    </button>
+                </fieldset>
+
                 <div class="field">
                     <label for="category">Category</label>
                     <div class="select-wrap">
@@ -41,6 +59,38 @@
                         </select>
                     </div>
                 </div>
+                <div class="options-grid">
+                    <div class="field">
+                        <label for="difficulty">Difficulty</label>
+                        <div class="select-wrap">
+                            <select id="difficulty">
+                                <option value="">Any</option>
+                                <option value="easy">Easy</option>
+                                <option value="medium">Medium</option>
+                                <option value="hard">Hard</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <label for="question-type">Question type</label>
+                        <div class="select-wrap">
+                            <select id="question-type">
+                                <option value="multiple">Multiple choice</option>
+                                <option value="boolean">True / False</option>
+                                <option value="">Mixed</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <label for="question-count" id="question-count-label">Questions</label>
+                        <div class="select-wrap">
+                            <select id="question-count"></select>
+                        </div>
+                    </div>
+                </div>
+
+                <p id="form-error" class="form-error" role="alert"></p>
+
                 <button type="submit" class="btn btn-primary btn-block">
                     Start game <span aria-hidden="true">→</span>
                 </button>
@@ -48,9 +98,9 @@
 
             <div class="start-footer">
                 <ul class="chips" aria-label="Game rules">
-                    <li class="chip"><span aria-hidden="true">❓</span> 10 questions</li>
-                    <li class="chip"><span aria-hidden="true">⏱️</span> 30s each</li>
-                    <li class="chip"><span aria-hidden="true">🔊</span> Sound on</li>
+                    <li class="chip"><span aria-hidden="true">⏱️</span> 30s per question</li>
+                    <li class="chip"><span aria-hidden="true">⚡</span> Speed bonus</li>
+                    <li class="chip"><span aria-hidden="true">🔥</span> Streak bonus</li>
                 </ul>
                 <button type="button" id="view-scores" class="btn btn-ghost btn-small">
                     <span aria-hidden="true">🏆</span> High scores
@@ -66,6 +116,7 @@
                     <span id="player-display"></span>
                 </div>
                 <div class="hud-right">
+                    <div class="streak-chip hidden" id="streak-chip" aria-live="polite"></div>
                     <div class="score-chip" aria-live="polite">
                         <span aria-hidden="true">⭐</span> <span id="score-display">0</span>
                     </div>
@@ -79,10 +130,16 @@
                 </div>
             </div>
 
+            <ul class="scoreboard hidden" id="scoreboard" aria-label="Scoreboard"></ul>
+
             <ol class="progress" id="progress" aria-label="Question progress"></ol>
 
             <div id="game-area" aria-live="polite">
                 <div class="loader"><span class="spinner" aria-hidden="true"></span><p>Loading questions...</p></div>
+            </div>
+
+            <div class="game-footer">
+                <button type="button" id="end-game" class="btn btn-ghost btn-small">End game</button>
             </div>
         </section>
 
@@ -91,15 +148,21 @@
             <div id="result-summary" class="result-summary hidden">
                 <div class="result-emoji" id="result-emoji" aria-hidden="true"></div>
                 <h2 class="result-title" id="result-title"></h2>
-                <p class="result-score"><span id="result-score"></span></p>
+                <p class="result-score"><span id="result-score"></span> <small class="result-unit">pts</small></p>
                 <p class="result-subtitle" id="result-subtitle"></p>
+            </div>
+
+            <div id="standings-wrap" class="standings hidden">
+                <h2 class="section-title"><span aria-hidden="true">👨‍👩‍👧‍👦</span> Tonight's standings</h2>
+                <ol id="standings" class="leaderboard"></ol>
             </div>
 
             <h2 id="scores-title" class="section-title"><span aria-hidden="true">🏆</span> Leaderboard</h2>
             <ol id="high-scores-list" class="leaderboard"></ol>
 
             <div class="button-group">
-                <button type="button" id="play-again" class="btn btn-primary">Play again</button>
+                <button type="button" id="rematch" class="btn btn-primary">Rematch</button>
+                <button type="button" id="play-again" class="btn btn-ghost">New game</button>
                 <button type="button" id="clear-scores" class="btn btn-ghost btn-danger">Clear scores</button>
             </div>
         </section>
