@@ -4,16 +4,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self'; media-src 'self'; connect-src https://opentdb.com; base-uri 'none'; form-action 'none'">
+    <meta name="referrer" content="no-referrer">
+    <meta name="description" content="A family-friendly, timed trivia game with sound effects and high scores.">
     <title>Maya Family Trivia Game</title>
     <link rel="stylesheet" href="styles.css">
-    <link rel="icon" type=image/png" href="assets/gio_favicon-32x32.png">
+    <link rel="icon" type="image/png" href="assets/gio_favicon-32x32.png">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Itim&display=swap" rel="stylesheet">
 </head>
 
 <body>
-    <div class="game-container">
+    <main class="game-container">
         <div class="header">
             <h1>Maya Family Trivia Game</h1>
         </div>
@@ -23,11 +26,11 @@
             <form id="player-form">
                 <div class="form-group">
                     <label for="player-name">Enter Your Name:</label>
-                    <input type="text" id="player-name" required>
+                    <input type="text" id="player-name" maxlength="30" autocomplete="nickname" required>
                 </div>
                 <div class="form-group">
                     <label for="category">Select a Category:</label>
-                    <select id="category" required>
+                    <select id="category">
                         <option value="">Loading categories...</option>
                     </select>
                 </div>
@@ -44,9 +47,9 @@
                 <div class="timer-bar">
                     <div id="timer-fill"></div>
                 </div>
-                <div id="timer-text">30</div>
+                <div id="timer-text" aria-hidden="true">30</div>
             </div>
-            <div id="game-area">
+            <div id="game-area" aria-live="polite">
                 <div class="loader">Loading questions...</div>
             </div>
         </div>
@@ -56,27 +59,26 @@
             <h2>High Scores</h2>
             <div id="high-scores-list"></div>
             <div class="button-group">
-                <button id="play-again" class="restart-btn">Play Again</button>
-                <button id="clear-scores" class="clear-btn">Clear Scores</button>
+                <button type="button" id="play-again" class="restart-btn">Play Again</button>
+                <button type="button" id="clear-scores" class="clear-btn">Clear Scores</button>
             </div>
         </div>
-    </div>
+    </main>
 
-    <div class="video-background">
-        <video autoplay muted loop playsinline>
+    <div class="video-background" aria-hidden="true">
+        <video autoplay muted loop playsinline preload="auto">
             <source src="assets/space_background.mp4" type="video/mp4">
         </video>
     </div>
     <div class="video-overlay"></div>
-    <main class="main-content">
 
-        <!-- audio sounds -->
-        <audio id="tick-sound" src="assets/tick-sound.wav" preload="auto"></audio>
-        <audio id="correct-sound" src="assets/correct-sound.mp3" preload="auto"></audio>
-        <audio id="wrong-sound" src="assets/wrong-sound.mp3" preload="auto"></audio>
-        <audio id="timeout-sound" src="assets/timeout-sound.mp3" preload="auto"></audio>
+    <!-- audio sounds -->
+    <audio id="tick-sound" src="assets/tick-sound.wav" preload="auto"></audio>
+    <audio id="correct-sound" src="assets/correct-sound.mp3" preload="auto"></audio>
+    <audio id="wrong-sound" src="assets/wrong-sound.mp3" preload="auto"></audio>
+    <audio id="timeout-sound" src="assets/timeout-sound.mp3" preload="auto"></audio>
 
-        <script src="app.js"></script>
+    <script src="app.js"></script>
 </body>
 
 </html>

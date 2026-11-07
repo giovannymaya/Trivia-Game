@@ -69,7 +69,6 @@ body {
     background-color: #639ede;
     box-shadow: 0 0.5em 0.5em -0.4em #007bff;
     transform: translateY(-0.1em);
-    box-shadow: 2em;
 }
 
 .player-info {
@@ -245,8 +244,31 @@ body {
     background: rgba(0, 0, 0, 0.5); /* adjust opacity*/
     z-index: -1;
 }
-/* main content area */
-.main-content {
-    position: relative;
-    z-index: 1;
+
+/* Respect users who prefer less motion: hide the animated background */
+@media (prefers-reduced-motion: reduce) {
+    .video-background video {
+        display: none;
+    }
+    #timer-fill {
+        transition: none;
+    }
+}
+
+/* Keyboard focus visibility */
+button:focus-visible,
+input:focus-visible,
+select:focus-visible {
+    outline: 3px solid #eac575;
+    outline-offset: 2px;
+}
+
+@media (max-width: 600px) {
+    body {
+        padding: 16px;
+    }
+    .score-item {
+        flex-direction: column;
+        gap: 4px;
+    }
 }
